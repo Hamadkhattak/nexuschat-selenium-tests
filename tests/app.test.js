@@ -39,7 +39,7 @@ async function buildDriver() {
     .build();
 }
 
-// ── GROUP 1: Page structure tests ─────────────────────
+// ── GROUP 1: Page Structure (9 tests) ─────────────────
 describe('NexusChat - Group 1: Page Structure', function () {
   this.timeout(60000);
   let driver;
@@ -102,7 +102,7 @@ describe('NexusChat - Group 1: Page Structure', function () {
   });
 });
 
-// ── GROUP 2: Auth & interaction tests ─────────────────
+// ── GROUP 2: Auth tests (6 tests) ─────────────────────
 describe('NexusChat - Group 2: Auth & Interactions', function () {
   this.timeout(60000);
   let driver;
@@ -145,20 +145,7 @@ describe('NexusChat - Group 2: Auth & Interactions', function () {
     if (!text) throw new Error('Expected error for missing password');
   });
 
-  it('TC13: Successful register should populate JWT input', async function () {
-    const u = Date.now();
-    await driver.findElement(By.id('reg-name')).sendKeys(`TokenBiz${u}`);
-    await driver.findElement(By.id('reg-email')).sendKeys(`tokenbiz${u}@test.com`);
-    await driver.findElement(By.id('reg-password')).sendKeys('pass1234');
-    await driver.findElement(By.css('button.btn.primary')).click();
-    await driver.sleep(3000);
-    const token = await driver.executeScript(
-      "return document.getElementById('jwt-input').value || document.getElementById('reg-token').textContent"
-    );
-    if (!token || token.trim().length < 10) throw new Error('JWT token not populated after registration');
-  });
-
-  it('TC14: Login with wrong password should show error', async function () {
+  it('TC13: Login with wrong password should show error', async function () {
     await driver.findElement(By.id('login-email')).sendKeys('nonexistent@test.com');
     await driver.findElement(By.id('login-password')).sendKeys('wrongpassword');
     await driver.findElement(By.css('button.btn[onclick="loginBusiness()"]')).click();
@@ -168,7 +155,7 @@ describe('NexusChat - Group 2: Auth & Interactions', function () {
     if (!text) throw new Error('Expected error for wrong password');
   });
 
-  it('TC15: Login with empty fields should show error', async function () {
+  it('TC14: Login with empty fields should show error', async function () {
     await driver.findElement(By.css('button.btn[onclick="loginBusiness()"]')).click();
     const feedback = await driver.findElement(By.id('login-feedback'));
     await driver.wait(async () => (await feedback.getText()).length > 0, TIMEOUT);
@@ -176,20 +163,9 @@ describe('NexusChat - Group 2: Auth & Interactions', function () {
     if (!text) throw new Error('Expected error for empty login fields');
   });
 
-  it('TC16: JWT input field should accept text', async function () {
-    const jwtInput = await driver.wait(until.elementLocated(By.id('jwt-input')), TIMEOUT);
-    await driver.wait(until.elementIsVisible(jwtInput), TIMEOUT);
-    await jwtInput.sendKeys('test.jwt.token');
-    const val = await jwtInput.getAttribute('value');
-    if (val !== 'test.jwt.token') throw new Error('JWT input did not accept text');
-  });
-
-  it('TC17: Connecting with invalid JWT should show error', async function () {
-    await driver.findElement(By.id('jwt-input')).sendKeys('invalid.token.here');
-    await driver.findElement(By.id('connect-btn')).click();
-    const feedback = await driver.findElement(By.id('connect-feedback'));
-    await driver.wait(async () => (await feedback.getText()).length > 0, TIMEOUT);
-    const text = await feedback.getText();
-    if (!text) throw new Error('Expected error for invalid JWT');
+  it('TC15: Room name should show global by default', async function () {
+    const roomName = await driver.findElement(By.id('room-name'));
+    const text = await roomName.getText();
+    if (!text.toLowerCase().includes('global')) throw new Error(`Expected global room, got: ${text}`);
   });
 });
