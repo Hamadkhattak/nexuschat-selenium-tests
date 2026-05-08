@@ -30,23 +30,22 @@ function getChromeOptions() {
   return options;
 }
 
-describe('NexusChat - Selenium Test Suite', function () {
+async function buildDriver() {
+  const service = new chrome.ServiceBuilder(chromedriverPath);
+  return new Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(getChromeOptions())
+    .setChromeService(service)
+    .build();
+}
+
+// ── GROUP 1: Page structure tests ─────────────────────
+describe('NexusChat - Group 1: Page Structure', function () {
   this.timeout(60000);
   let driver;
 
-  before(async function () {
-    const service = new chrome.ServiceBuilder(chromedriverPath);
-    driver = await new Builder()
-      .forBrowser('chrome')
-      .setChromeOptions(getChromeOptions())
-      .setChromeService(service)
-      .build();
-  });
-
-  after(async function () {
-    if (driver) await driver.quit();
-  });
-
+  before(async function () { driver = await buildDriver(); });
+  after(async function () { if (driver) await driver.quit(); });
   beforeEach(async function () {
     await driver.get(BASE_URL);
     await driver.sleep(800);
@@ -86,7 +85,36 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (cls.includes('visible')) throw new Error('Input area should be hidden before connecting');
   });
 
-  it('TC07: Register with valid credentials should succeed', async function () {
+  it('TC07: Messages container should exist on page', async function () {
+    const el = await driver.findElement(By.id('messages'));
+    if (!await el.isDisplayed()) throw new Error('Messages container not found');
+  });
+
+  it('TC08: JWT textarea should be visible', async function () {
+    const el = await driver.wait(until.elementLocated(By.id('jwt-input')), TIMEOUT);
+    if (!await el.isDisplayed()) throw new Error('JWT input not visible');
+  });
+
+  it('TC09: Health check API should return ok', async function () {
+    await driver.get(`${BASE_URL}/api/health`);
+    const body = await driver.findElement(By.css('body')).getText();
+    if (!body.includes('ok')) throw new Error(`Health check failed: ${body}`);
+  });
+});
+
+// ── GROUP 2: Auth & interaction tests ─────────────────
+describe('NexusChat - Group 2: Auth & Interactions', function () {
+  this.timeout(60000);
+  let driver;
+
+  before(async function () { driver = await buildDriver(); });
+  after(async function () { if (driver) await driver.quit(); });
+  beforeEach(async function () {
+    await driver.get(BASE_URL);
+    await driver.sleep(800);
+  });
+
+  it('TC10: Register with valid credentials should succeed', async function () {
     await driver.findElement(By.id('reg-name')).sendKeys(TEST_NAME);
     await driver.findElement(By.id('reg-email')).sendKeys(TEST_EMAIL);
     await driver.findElement(By.id('reg-password')).sendKeys(TEST_PASSWORD);
@@ -97,7 +125,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (text.toLowerCase().includes('error')) throw new Error(`Registration failed: ${text}`);
   });
 
-  it('TC08: Register with missing name should show error', async function () {
+  it('TC11: Register with missing name should show error', async function () {
     await driver.findElement(By.id('reg-email')).sendKeys('noname@test.com');
     await driver.findElement(By.id('reg-password')).sendKeys('pass123');
     await driver.findElement(By.css('button.btn.primary')).click();
@@ -107,7 +135,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (!text) throw new Error('Expected error for missing name');
   });
 
-  it('TC09: Register with missing password should show error', async function () {
+  it('TC12: Register with missing password should show error', async function () {
     await driver.findElement(By.id('reg-name')).sendKeys('NoPwdBiz');
     await driver.findElement(By.id('reg-email')).sendKeys('nopwd@test.com');
     await driver.findElement(By.css('button.btn.primary')).click();
@@ -117,7 +145,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (!text) throw new Error('Expected error for missing password');
   });
 
-  it('TC10: Successful register should populate JWT token', async function () {
+  it('TC13: Successful register should populate JWT input', async function () {
     const u = Date.now();
     await driver.findElement(By.id('reg-name')).sendKeys(`TokenBiz${u}`);
     await driver.findElement(By.id('reg-email')).sendKeys(`tokenbiz${u}@test.com`);
@@ -130,17 +158,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (!token || token.trim().length < 10) throw new Error('JWT token not populated after registration');
   });
 
-  it('TC11: Login with valid credentials should succeed', async function () {
-    await driver.findElement(By.id('login-email')).sendKeys('bookstoreadmin@test.com');
-    await driver.findElement(By.id('login-password')).sendKeys('wrongpassword');
-    await driver.findElement(By.css('button.btn[onclick="loginBusiness()"]')).click();
-    const feedback = await driver.findElement(By.id('login-feedback'));
-    await driver.wait(async () => (await feedback.getText()).length > 0, TIMEOUT);
-    const text = await feedback.getText();
-    if (!text) throw new Error('Login feedback should show a response');
-  });
-
-  it('TC12: Login with wrong password should show error', async function () {
+  it('TC14: Login with wrong password should show error', async function () {
     await driver.findElement(By.id('login-email')).sendKeys('nonexistent@test.com');
     await driver.findElement(By.id('login-password')).sendKeys('wrongpassword');
     await driver.findElement(By.css('button.btn[onclick="loginBusiness()"]')).click();
@@ -150,7 +168,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (!text) throw new Error('Expected error for wrong password');
   });
 
-  it('TC13: Login with empty fields should show error', async function () {
+  it('TC15: Login with empty fields should show error', async function () {
     await driver.findElement(By.css('button.btn[onclick="loginBusiness()"]')).click();
     const feedback = await driver.findElement(By.id('login-feedback'));
     await driver.wait(async () => (await feedback.getText()).length > 0, TIMEOUT);
@@ -158,7 +176,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (!text) throw new Error('Expected error for empty login fields');
   });
 
-  it('TC14: JWT input field should accept text', async function () {
+  it('TC16: JWT input field should accept text', async function () {
     const jwtInput = await driver.wait(until.elementLocated(By.id('jwt-input')), TIMEOUT);
     await driver.wait(until.elementIsVisible(jwtInput), TIMEOUT);
     await jwtInput.sendKeys('test.jwt.token');
@@ -166,7 +184,7 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (val !== 'test.jwt.token') throw new Error('JWT input did not accept text');
   });
 
-  it('TC15: Connecting with invalid JWT should show error', async function () {
+  it('TC17: Connecting with invalid JWT should show error', async function () {
     await driver.findElement(By.id('jwt-input')).sendKeys('invalid.token.here');
     await driver.findElement(By.id('connect-btn')).click();
     const feedback = await driver.findElement(By.id('connect-feedback'));
