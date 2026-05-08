@@ -25,8 +25,11 @@ function getChromeOptions() {
   options.addArguments('--disable-gpu');
   options.addArguments('--window-size=1280,800');
   options.addArguments('--disable-extensions');
-  options.addArguments('--disable-background-networking');
   options.addArguments('--no-first-run');
+  options.addArguments('--disable-background-networking');
+  options.addArguments('--disable-features=NetworkService,NetworkServiceInProcess');
+  options.addArguments('--disable-web-security');
+  options.addArguments('--shm-size=512m');
   return options;
 }
 
@@ -47,9 +50,10 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (driver) await driver.quit();
   });
 
-  beforeEach(async function () {
+ beforeEach(async function () {
     await driver.get(BASE_URL);
-  });
+    await driver.sleep(800);
+});
 
   // ── TC01 ─────────────────────────────────────────────
   it('TC01: Page title should be NexusChat', async function () {
