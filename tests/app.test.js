@@ -1,6 +1,13 @@
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
-const chromedriverPath = require('chromedriver').path;
+
+// Use system chromedriver on Linux (EC2), npm package on Windows
+let chromedriverPath;
+if (process.platform === 'linux') {
+  chromedriverPath = '/usr/local/bin/chromedriver';
+} else {
+  chromedriverPath = require('chromedriver').path;
+}
 
 const BASE_URL = 'http://localhost:3000';
 const TIMEOUT = 10000;
