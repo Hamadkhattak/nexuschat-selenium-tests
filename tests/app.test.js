@@ -24,6 +24,9 @@ function getChromeOptions() {
   options.addArguments('--disable-dev-shm-usage');
   options.addArguments('--disable-gpu');
   options.addArguments('--window-size=1280,800');
+  options.addArguments('--disable-extensions');
+  options.addArguments('--disable-background-networking');
+  options.addArguments('--no-first-run');
   return options;
 }
 
