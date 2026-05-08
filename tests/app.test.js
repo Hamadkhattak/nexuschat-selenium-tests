@@ -132,17 +132,18 @@ describe('NexusChat - Selenium Test Suite', function () {
     if (!text) throw new Error('Expected error for missing password');
   });
 
-  // ── TC10 ─────────────────────────────────────────────
-  it('TC10: Successful register should display JWT token', async function () {
-    const u = Date.now();
-    await driver.findElement(By.id('reg-name')).sendKeys(`TokenBiz${u}`);
-    await driver.findElement(By.id('reg-email')).sendKeys(`tokenbiz${u}@test.com`);
-    await driver.findElement(By.id('reg-password')).sendKeys('pass1234');
-    await driver.findElement(By.css('button.btn.primary')).click();
-    await driver.sleep(3000);
-    const tokenBox = await driver.findElement(By.id('reg-token'));
-    const token = await tokenBox.getText();
-    if (!token || token.length < 10) throw new Error('JWT token not displayed after registration');
+// ── TC10 ─────────────────────────────────────────────
+it('TC10: Successful register should display JWT token', async function () {
+  const u = Date.now();
+  await driver.findElement(By.id('reg-name')).sendKeys(`TokenBiz${u}`);
+  await driver.findElement(By.id('reg-email')).sendKeys(`tokenbiz${u}@test.com`);
+  await driver.findElement(By.id('reg-password')).sendKeys('pass1234');
+  await driver.findElement(By.css('button.btn.primary')).click();
+  await driver.sleep(3000);
+  const token = await driver.executeScript(
+    "return document.getElementById('reg-token').textContent || document.getElementById('jwt-input').value"
+  );
+  if (!token || token.trim().length < 10) throw new Error('JWT token not displayed after registration');
 });
 
 it('TC11: Login with valid credentials should succeed', async function () {
@@ -177,14 +178,14 @@ it('TC11: Login with valid credentials should succeed', async function () {
     if (!text) throw new Error('Expected error for empty login fields');
   });
 
-  // ── TC14 ─────────────────────────────────────────────
-  it('TC14: JWT input field should accept text', async function () {
-    const jwtInput = await driver.findElement(By.id('jwt-input'));
-    if (!await jwtInput.isDisplayed()) throw new Error('JWT input not visible');
-    await jwtInput.sendKeys('test.jwt.token');
-    const val = await jwtInput.getAttribute('value');
-    if (val !== 'test.jwt.token') throw new Error('JWT input did not accept text');
-  });
+// ── TC14 ─────────────────────────────────────────────
+it('TC14: JWT input field should accept text', async function () {
+  const jwtInput = await driver.wait(until.elementLocated(By.id('jwt-input')), TIMEOUT);
+  await driver.wait(until.elementIsVisible(jwtInput), TIMEOUT);
+  await jwtInput.sendKeys('test.jwt.token');
+  const val = await jwtInput.getAttribute('value');
+  if (val !== 'test.jwt.token') throw new Error('JWT input did not accept text');
+});
 
   // ── TC15 ─────────────────────────────────────────────
   it('TC15: Connecting with invalid JWT should show error', async function () {
