@@ -1,0 +1,20 @@
+{
+  "name": "nexuschat-selenium-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests/app.test.js --timeout 30000 --reporter spec"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "chromedriver": "^148.0.2",
+    "selenium-webdriver": "^4.43.0"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.5"
+  }
+}
